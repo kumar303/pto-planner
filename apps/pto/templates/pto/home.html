@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section id="pto_planner">
+  <p>{{ _('Mozilla PTO Planner') }}</p>
+  <form id="planner" data-url="{{ calculate_pto_url }}">
+    <div><label>{{ _('Days you have available') }}</label>
+      <input name="days_avail" id="days_avail" type="text" value="0"></div>
+    <div><label>{{ _('Days earned per quarter') }}</label>
+      <input name="per_quarter" id="per_quarter" type="text" value="0.51"></div>
+    <div><label>{{ _('Start of your trip') }}</label>
+      <input class="datepicker" name="start_date" id="start_date" type="text" value=""></div>
+  </form>
+  <p id="result">
+    {{ _('Select a start date for your trip.') }}
+  </p>
+</section>
+{% endblock %}

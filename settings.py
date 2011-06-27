@@ -1,6 +1,8 @@
 # Django settings file for a project based on the playdoh template.
 
+import logging
 import os
+import socket
 
 from django.utils.functional import lazy
 
@@ -43,6 +45,22 @@ USE_I18N = True
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
 USE_L10N = True
+
+# The host currently running the site.  Only use this in code for good reason;
+# the site is designed to run on a cluster and should continue to support that
+HOSTNAME = socket.gethostname()
+
+# The front end domain of the site. If you're not running on a cluster this
+# might be the same as HOSTNAME but don't depend on that.  Use this when you
+# need the real domain.
+DOMAIN = HOSTNAME
+
+# Full base URL for your main site including protocol.  No trailing slash.
+#   Example: https://example.com
+SITE_URL = 'http://%s' % DOMAIN
+
+# paths for images, e.g. mozcdn.com/amo or '/static'
+STATIC_URL = SITE_URL
 
 # Gettext text domain
 TEXT_DOMAIN = 'messages'
@@ -132,8 +150,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.csrf',
     'django.contrib.messages.context_processors.messages',
 
+    'pto.context_processors.global_settings',
     'commons.context_processors.i18n',
-    #'jingo_minify.helpers.build_ids',
+    'jingo_minify.helpers.build_ids',
 )
 
 TEMPLATE_DIRS = (
@@ -162,13 +181,28 @@ def JINJA_CONFIG():
 # and js files that can be bundled together by the minify app.
 MINIFY_BUNDLES = {
     'css': {
-        'example_css': (
-            'css/examples/main.css',
+        'pto': (
+            'css/pto/jquery-ui-theme/ui.all.css',
+            # Hmm, these files still get requested even though all.css
+            # loads them?
+            'css/pto/jquery-ui-theme/ui.theme.css',
+            'css/pto/jquery-ui-theme/ui.core.css',
+            'css/pto/jquery-ui-theme/ui.accordion.css',
+            'css/pto/jquery-ui-theme/ui.datepicker.css',
+            'css/pto/jquery-ui-theme/ui.dialog.css',
+            'css/pto/jquery-ui-theme/ui.progressbar.css',
+            'css/pto/jquery-ui-theme/ui.resizable.css',
+            'css/pto/jquery-ui-theme/ui.slider.css',
+            'css/pto/jquery-ui-theme/ui.tabs.css',
+            'css/pto/main.css',
         ),
     },
     'js': {
-        'example_js': (
+        'pto': (
             'js/libs/jquery-1.4.4.min.js',
+            'js/libs/jquery.ui.all.js',
+            'js/libs/format.js',
+            'js/pto/pto.js',
         ),
     }
 }
@@ -221,6 +255,7 @@ INSTALLED_APPS = (
     # L10n
     'product_details',
 
+    'pto',
 )
 
 # Tells the extract script what files to look for L10n in and what function
@@ -268,3 +303,25 @@ BROKER_VHOST = 'playdoh'
 BROKER_CONNECTION_TIMEOUT = 0.1
 CELERY_RESULT_BACKEND = 'amqp'
 CELERY_IGNORE_RESULT = True
+
+# Logging
+LOG_LEVEL = logging.DEBUG
+HAS_SYSLOG = False  # syslog is used if HAS_SYSLOG and NOT DEBUG.
+# SYSLOG_TAG = "http_app_addons"
+# SYSLOG_TAG2 = "http_app_addons2"
+# SYSLOG_CSP = "http_app_addons_csp"
+# See PEP 391 and log_settings.py for formatting help.  Each section of
+# LOGGING will get merged into the corresponding section of
+# log_settings.py. Handlers and log levels are set up automatically based
+# on LOG_LEVEL and DEBUG unless you set them here.  Messages will not
+# propagate through a logger unless propagate: True is set.
+LOGGING_CONFIG = None
+LOGGING = {
+    'loggers': {
+        'pto': {'level': logging.INFO},
+    },
+}
+
+# TODO(Kumar) after upgrading Django, remove this! The above config will work.
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)

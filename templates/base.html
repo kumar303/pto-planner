@@ -2,18 +2,19 @@
 <html LANG="{{ LANG }}" dir="{{ DIR }}">
   <head>
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
-    <title>{% block page_title %}playdoh examples{% endblock %}</title>
+    <title>{% block page_title %}Mozilla PTO Planner{% endblock %}</title>
 
     {% block site_css %}
-      {{ css('example_css') }}
+      {{ css('pto') }}
     {% endblock %}
   </head>
   <body>
     {% block content %}{% endblock %}
 
     {% block site_js %}
-      {{ js('example_js') }}
+      {# This declares function gettext and ngettext #}
+      <script src="{{ static(url('jsi18n')) }}"></script>
+      {{ js('pto') }}
     {% endblock %}
   </body>
 </html>
-

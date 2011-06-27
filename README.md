@@ -1,13 +1,30 @@
-playdoh
+PTO Planner
+===========
+
+To install, run:
+
+    pip install -r requirements/compiled.txt -r requirements/dev.txt
+    cp settings_local.py-dist settings_local.py
+    mysql -u root -e "create database pto_planner"
+
+Edit settings_local.py with the database credentials:
+    
+    'NAME': 'pto_planner',
+    'USER': 'root',
+    'PASSWORD': '',
+    ...
+
+Then start the web server:
+
+    python manage.py runserver
+
+Playdoh
 =======
 
-Mozilla's Playdoh is a web application template based on [Django][django].
+This site is built with Mozilla's Playdoh, a web application template
+based on [Django][django].
 
-Patches are welcome! Feel free to fork and contribute to this project on
-[github][gh-playdoh].
-
-Full [documentation][docs] is available as well.
-
+Full [documentation][docs] for Playdoh is available.
 
 [django]: http://www.djangoproject.com/
 [gh-playdoh]: https://github.com/mozilla/playdoh
