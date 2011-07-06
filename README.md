@@ -1,6 +1,12 @@
 PTO Planner
 ===========
 
+No more confusing math!  This is a small web app (with a dumb name) to help
+you figure out how much PTO you'll have available on a given future date.
+
+Install
+=======
+
 To install, run:
 
     pip install -r requirements/compiled.txt -r requirements/dev.txt
@@ -8,7 +14,7 @@ To install, run:
     mysql -u root -e "create database pto_planner"
 
 Edit settings_local.py with the database credentials:
-    
+
     'NAME': 'pto_planner',
     'USER': 'root',
     'PASSWORD': '',
@@ -17,6 +23,11 @@ Edit settings_local.py with the database credentials:
 Then start the web server:
 
     python manage.py runserver
+
+Begin Slacking Off
+==================
+
+Open http://localhost:8000/ and start planning your next vacation.
 
 Playdoh
 =======
