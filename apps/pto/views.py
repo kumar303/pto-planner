@@ -14,17 +14,25 @@ def home(request):
                         dict(calculate_pto_url=reverse('pto.calculate_pto')))
 
 
+def days_to_hrs(day):
+    return day * Decimal('8')
+
+
+def hrs_to_days(hour):
+    return hour / Decimal('8')
+
+
 @json_view
 def calculate_pto(request):
     d = date.today()
     today = datetime(d.year, d.month, d.day, 0, 0, 0)
     trip_start = parse_datetime(request.GET['start_date'])
     pointer = today
-    days_per_quarter = Decimal(request.GET['per_quarter'])
-    days_avail = Decimal(request.GET['days_avail'])
+    hours_per_quarter = Decimal(request.GET['per_quarter'])
+    hours_avail = Decimal(request.GET['hours_avail'])
     while pointer <= trip_start:
         if pointer.day == 1 or pointer.day == 15:
-            days_avail += days_per_quarter
+            hours_avail += hours_per_quarter
         if pointer.day > 15:
             add_days = days_til_1st(pointer)
         else:
@@ -32,7 +40,9 @@ def calculate_pto(request):
         if add_days == 0:
             add_days = 15  # 1st of the month
         pointer += timedelta(days=add_days)
-    return dict(days_available_on_start=str(round(days_avail, 2)))
+    return dict(hours_available_on_start=str(round(hours_avail, 2)),
+                days_available_on_start=str(round(hrs_to_days(hours_avail),
+                                                  2)))
 
 
 def days_til_1st(a_datetime):

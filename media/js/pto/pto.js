@@ -17,10 +17,14 @@ function initDatepickers() {
                     data: $form.serialize(),
                     cache: false,
                     success: function(data) {
-                        $('#result').text(format(ngettext('You will have {0} day of PTO available',
-                                                          'You will have {0} days of PTO available',
-                                                          data.days_available_on_start),
-                                                 [data.days_available_on_start]));
+                        var hrs = format(ngettext('You will have {0} hour of PTO available',
+                                                  'You will have {0} hours of PTO available',
+                                                  data.hours_available_on_start),
+                                         [data.hours_available_on_start]),
+                            days = format(ngettext('{0} day', '{0} days',
+                                                   data.days_available_on_start),
+                                         [data.days_available_on_start]);
+                        $('#result').text(hrs + ' (' + days + ')');
                     },
                     error: function(XMLHttpRequest, textStatus, errorThrown) {
                         if (typeof console !== 'undefined') {
