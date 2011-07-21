@@ -2,7 +2,7 @@
 # needed to run the site, it belongs in requirements/prod.txt. If it's a
 # package for developers (testing, docs, etc.), it goes in this file.
 
--r prod.txt
+#-r prod.txt
 
 # Documentation
 Sphinx==1.0.6
@@ -14,3 +14,6 @@ nose==1.0.0
 
 # L10n
 translate-toolkit==1.8.0
+
+# Mocking
+mock

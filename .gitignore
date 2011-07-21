@@ -15,3 +15,8 @@ vendor
 tmp/*
 *~
 *.mo
+settings/local.py
+settings/local_test.py
+*.js.old
+TODO
+cover/

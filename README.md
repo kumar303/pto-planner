@@ -1,28 +1,12 @@
-PTO Planner
-===========
+PTO
+===
 
-No more confusing math!  This is a small web app (with a dumb name) to help
-you figure out how much PTO you'll have available on a given future date.
+Takes care of PTO management for Mozilla!
 
 Install
 =======
 
-To install, run:
-
-    pip install -r requirements/compiled.txt -r requirements/dev.txt
-    cp settings_local.py-dist settings_local.py
-    mysql -u root -e "create database pto_planner"
-
-Edit settings_local.py with the database credentials:
-
-    'NAME': 'pto_planner',
-    'USER': 'root',
-    'PASSWORD': '',
-    ...
-
-Then start the web server:
-
-    python manage.py runserver
+to be continued...
 
 Begin Slacking Off
 ==================

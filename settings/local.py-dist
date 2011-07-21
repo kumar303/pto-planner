@@ -1,0 +1,37 @@
+from base import *
+
+# Is this a development instance? Set this to True on development/master
+# instances and False on stage/prod.
+DEV = True
+
+#INSTALLED_APPS = list(INSTALLED_APPS) + ['debug_toolbar']
+#INSTALLED_APPS = tuple(INSTALLED_APPS)
+#MIDDLEWARE_CLASSES = list(MIDDLEWARE_CLASSES) + ['debug_toolbar.middleware.DebugToolbarMiddleware']
+#MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
+#INTERNAL_IPS = ('127.0.0.1',)
+
+#TIME_ZONE = 'Europe/London'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pto',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
+        'OPTIONS': {
+            'init_command': 'SET storage_engine=InnoDB',
+            'charset' : 'utf8',
+            'use_unicode' : True,
+        },
+        'TEST_CHARSET': 'utf8',
+        'TEST_COLLATION': 'utf8_general_ci',
+    },
+}
+
+DEBUG = TEMPLATE_DEBUG = True
+TEMPLATE_STRING_IF_INVALID = '!{ %s }'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEBUG_PROPAGATE_EXCEPTIONS = True
+PWD_ALGORITHM = 'sha521'

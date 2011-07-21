@@ -1,0 +1,9 @@
+.date-hint {
+    font-size:90%;
+    padding-left:10px;
+    color:#999;
+}
+textarea[name="details"] {
+    width:600px;
+    height:140px;
+}

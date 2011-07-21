@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block extra_site_css %}
+{{ css('jquery_ui') }}
+{{ css('dates.list') }}
+<style>
+/* tables */
+table.tablesorter {
+	border-collapse: collapse;
+	font-family:arial;
+	background-color: #CDCDCD;
+	margin:10px 0pt 15px;
+	font-size: 8pt;
+	width: 100%;
+	text-align: left;
+}
+table.tablesorter thead tr th, table.tablesorter tfoot tr th {
+	background-color: #e6EEEE;
+	border: 1px solid #FFF;
+	font-size: 8pt;
+	padding: 4px;
+	border:1px solid #ccc;
+}
+table.tablesorter thead tr .header {
+	background-image: url(bg.gif);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+}
+table.tablesorter tbody td {
+	color: #3D3D3D;
+	padding: 4px;
+	background-color: #FFF;
+	vertical-align: top;
+	border:1px solid #ccc;
+}
+table.tablesorter tbody tr.odd td {
+	background-color:#F0F0F6;
+}
+table.tablesorter thead tr .headerSortUp {
+	background-image: url(asc.gif);
+}
+table.tablesorter thead tr .headerSortDown {
+	background-image: url(desc.gif);
+}
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
+background-color: #8dbdd8;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="filter_form" action=".">
+<table id="filters" border="0">
+    <tr>
+		<td>
+			PTO between:
+		</td>
+		<td>
+                        {{ form.date_from|safe }}
+                         -
+                        {{ form.date_to|safe }}
+		</td>
+		<td>
+			Filed:
+		</td>
+		<td>
+                        {{ form.date_filed_from|safe }}
+                        -
+                        {{ form.date_filed_to|safe }}
+		</td>
+		<td>
+			Name:
+		</td>
+		<td>
+			{{ form.name|safe }}
+		</td>
+		<td rowspan="2">
+			<button type="submit">Apply filters</button><br />
+			<button type="reset">Clear filters</button>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			&nbsp;
+		</td>
+		<td>
+                <!-- nothing -->
+		</td>
+		<td>
+			&nbsp;
+		</td>
+		<td>
+                <!-- nothing -->
+		</td>
+		<td>
+			Country:
+		</td>
+		<td>
+                        <select name="country" id="country">
+				<option value="">Any country</option>
+			</select>
+		</td>
+	</tr>
+</table>
+</form>
+<div id="formats">
+	Formats:
+	<ul>
+		<li class="active" title="You're lookin' at it">Table</li>
+		<li><a class="format" href="?format=csv" id="format-csv" title="Good for spreadsheet software">CSV / Excel</a></li>
+		<li><a class="format" href="?format=atom" id="format-atom" title="Good for feed readers">Atom</a></li>
+		<li><a class="format" href="?format=ical" id="format-ical" title="Good for calendar apps">iCal</a></li>
+		<li><a class="format" href="?format=json" id="format-json" title="Good for mash-ups">JSON</a></li>
+		<li><a class="format" href="?format=sql" id="format-sql" title="Good for importing test data">SQL</a></li>
+	</ul>
+</div>
+
+<div id="pto"><!-- not sure what this does -->
+</div>
+
+
+<div class="pto_table_container">
+        <table id="pto_table" class="display tablesorter">
+                <thead>
+                        <tr>
+                        <!--
+                                <th>Email</th>
+                                <th style="width:15%">First name</th>
+                                <th style="width:15%">Last name</th>
+                                <th style="width:80px">Date filed</th>
+                                <th style="width:50px">Hours</th>
+                                <th style="width:80px">Start</th>
+                                <th style="width:80px">End</th>
+                                <th style="width:1%">City</th>
+                                <th style="width:50px">Country</th>
+                                <th style="width:15%">Details</th>
+                                <th style="width:50px">Edit</th>
+                                <th style="width:50px">View hours</th>
+                        -->
+                                <th>Email</th>
+                                <th>First name</th>
+                                <th>Last name</th>
+                                <th>Date filed</th>
+                                <th>Hours</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>City</th>
+                                <th>Country</th>
+                                <th>Details</th>
+                                <th>Edit</th>
+                                <th>View hours</th>
+                        </tr>
+                </thead>
+                <tbody></tbody>
+                <tfooter></tfooter>
+        </table>
+</div>
+
+{% endblock %}
+
+
+{% block extra_site_js %}
+{{ js('jquery_ui') }}
+<script>
+var DATE_MIN = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
+var DATE_MAX = new Date({{ last_date.year }}, {{ last_date.month }}-1, {{ last_date.day }});
+var FILED_MIN = new Date({{ first_filed_date.year }}, {{ first_filed_date.month }}-1, {{ first_filed_date.day }});
+var FILED_MAX = new Date({{ today.year }}, {{ today.month }}-1, {{ today.day }});
+var DATA_URL = '{{ url('dates.list_json') }}';
+</script>
+{{ js('dates.list') }}
+{% endblock %}

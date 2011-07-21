@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block extra_site_css %}
+{{ css('dates.home') }}
+{% endblock %}
+
+
+{% block content %}
+
+<div id="calendar"></div>
+
+{% endblock %}
+
+
+{% block extra_site_js %}
+<script>
+var CALENDAR_FIRST_DAY = {{ first_day }}; // 0=Sunday, 1=Monday
+</script>
+{{ js('dates.home') }}
+{% endblock %}

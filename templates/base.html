@@ -1,20 +1,50 @@
-<!DOCTYPE html>
-<html LANG="{{ LANG }}" dir="{{ DIR }}">
-  <head>
-    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
-    <title>{% block page_title %}Mozilla PTO Planner{% endblock %}</title>
+<!doctype html>
+<!-- to get the real source code of this project visit:
+     https://github.com/mozilla/pto
 
+     Long live Django!
+-->
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="/media/img/favicon.ico">
+    <title>{% block page_title %}Mozilla PTO{% endblock %}</title>
     {% block site_css %}
-      {{ css('pto') }}
+      {{ css('global') }}
     {% endblock %}
+    {% block extra_site_css %}
+    {% endblock %}
+    <link rel="shortcut icon" type="image/x-icon" href="/media/img/favicon.ico">
   </head>
   <body>
-    {% block content %}{% endblock %}
+  <div id="page">
 
-    {% block site_js %}
-      {# This declares function gettext and ngettext #}
-      <script src="{{ static(url('jsi18n')) }}"></script>
-      {{ js('pto') }}
-    {% endblock %}
+  <header>
+    <h1><a href="/">PTO Notification</a></h1>
+    {% if request.user.is_authenticated() %}
+    <nav>
+      <ul id="menu">
+        <li><a href="{{ url('dates.notify') }}">Notify</a></li>
+        <li><a href="{{ url('dates.list') }}">List</a></li>
+        <li><a href="./report.php">Report</a></li>
+        <li>Hi <strong>{{ request.user.first_name }}</strong>
+           <a href="{{ url('users.logout') }}">log out</a>
+        </li>
+      </ul>
+    </nav>
+    {% endif %}
+  </header>
+
+  <section>
+  {% if page_title %}<h2>{{ page_title }}</h2>{% endif %}
+  {% block content %}{% endblock %}
+  </section>
+
+  {% block site_js %}
+    {{ js('global') }}
+  {% endblock %}
+  {% block extra_site_js %}
+  {% endblock %}
+  </div>
   </body>
 </html>

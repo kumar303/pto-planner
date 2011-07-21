@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block extra_site_css %}
+{{ css('jquery_ui') }}
+{{ css('dates') }}
+{% endblock %}
+
+{% block content %}
+
+<form action="." method="post">{{ csrf() }}
+<table>
+{{ form|safe }}
+<tr>
+  <td><a href="/">&larr; cancel</a></td>
+  <td><input type="submit" value="Next &rarr;"></td>
+</tr>
+</table>
+<p>The following managers will be notified:<br>
+{% for manager_details in all_managers %}
+  <code>{{ full_name_form(manager_details) }}</code>{% if not loop.last %}, {% endif %}
+{% endfor %}
+</p>
+</form>
+{% endblock %}
+
+
+{% block extra_site_js %}
+{{ js('jquery_ui') }}
+{{ js('dates.notify') }}
+{% endblock %}

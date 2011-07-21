@@ -1,0 +1,99 @@
+import ldap
+from django.contrib.auth.models import User, Group
+from django.conf import settings
+
+AUTH_LDAP_SERVER = 'ldap.server.com'
+AUTH_LDAP_BASE_USER = "cn=Manager,dc=ldap,dc=server,dc=com"
+AUTH_LDAP_BASE_PASS = "Manager Password"
+AUTH_LDAP_BASE = "dc=ldap,dc=server,dc=com"
+AUTH_LDAP_SCOPE = ldap.SCOPE_SUBTREE
+
+
+
+def update_user_details(username):
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+    #ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, self.certfile)
+    ldo = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
+    ldo.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+    ldo.simple_bind_s(settings.AUTH_LDAP_BIND_DN,
+                      settings.AUTH_LDAP_BIND_PASSWORD)
+    filter = "(&(objectclass=posixAccount)(employeeType=active))"
+    values = ['uid', 'mail', 'givenName', 'sn', 'manager']
+    values = ['cn', 'objectClass', 'bugzillaEmail', 'sn', 'mail', 'givenName', 'uid', 'manager','cn']
+    #help(ldo.search_s) search_s(self, base, scope, filterstr='(objectClass=*)', attrlist=None, attrsonly=0) method of ldap.ldapobject.SimpleLDAPObject instance
+    result = ldo.search_s("dc=mozilla", ldap.SCOPE_SUBTREE, "mail=" + username,
+                          values)
+
+    #result_id = ldo.search('dc=mozilla',
+    #                   ldap.SCOPE_SUBTREE,
+    #                   filter, values)
+    ldo.unbind_s()
+    from pprint import pprint
+    #print result[0][1].keys()
+    #pprint(result[0])
+    pprint(result)
+    return ''
+    return result
+
+
+import ldap
+from ldap.filter import filter_format
+
+def update_user_details(username):
+    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+    #print settings.AUTH_LDAP_SERVER_URI
+    conn = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
+    #conn = ldap.initialize("ldaps://addressbook.mozilla.com:636")
+
+    try:
+        try:
+            conn.bind_s("mail=%s,o=com,dc=mozilla" % username,
+                        'waterl00expert')
+            #conn.simple_bind_s(settings.AUTH_LDAP_BIND_DN,
+            #                   settings.AUTH_LDAP_BIND_PASSWORD)
+            #print "BIND_S", conn.bind_s('uid=binduser,ou=logins,dc=mozilla',
+            #            settings.AUTH_LDAP_BIND_PASSWORD)
+
+            search_filter = filter_format("(mail=%s)", ("pbengtsson@mozilla.com", ))
+            #search_filter = filter_format("(cn=*%s*)", ("Peter", ))
+            attrs = None
+            try:
+                rs = conn.search_s("dc=mozilla", ldap.SCOPE_SUBTREE, search_filter, attrs)
+            except ldap.SIZELIMIT_EXCEEDED:
+                print("Too many results!")
+            if len(rs) > 0:
+                for result in rs:
+                    dn, person = result
+                    print("==== %s ====" % person['cn'])
+                    print person.keys()
+                    if 'physicalDeliveryOfficeName' in person:
+                        print(person['physicalDeliveryOfficeName'])
+                    if 'manager' in person:
+                        print(person['manager'])
+            else:
+                print("No results")
+        except ldap.INVALID_CREDENTIALS, ic:
+                print(ic)
+    finally:
+        conn.unbind()
+
+def xxupdate_user_details(username):
+    LDAP_DEBUG = 0
+    print settings.AUTH_LDAP_SERVER_URI
+    conn = ldap.initialize(settings.AUTH_LDAP_SERVER_URI, LDAP_DEBUG)
+    try:
+        print "(mail=%s)" % username
+
+        #rs = conn.search_s("ou=people,dc=mozillians,dc=org", ldap.SCOPE_SUBTREE, "(uid=%s)" % username)
+        search = filter_format("(cn=*%s*)", ("Peter", ))
+        rs = conn.search_s('dc=mozilla', ldap.SCOPE_SUBTREE, search)
+        print rs
+        if len(rs) == 1:
+            dn, u = rs[0]
+            print dn
+            #request.session[DN_SESSION_KEY] = dn
+            #log.debug("Cached dn=%s in the session" % dn)
+        else:
+            raise UNKNOWN_USER("No user with uid '%s' was found." % request.user.username)
+    finally:
+        conn.unbind()

@@ -1,0 +1,17 @@
+data/setup.py.i
+data/django_auth_ldap/__init__.py.i
+data/django_auth_ldap/tests.py.i
+data/docs/Makefile.i
+data/django_auth_ldap/dn.py.i
+data/tests/__init__.py.i
+data/.hgtags.i
+data/tests/runtests.py.i
+data/.hgignore.i
+data/docs/index.rst.i
+data/docs/conf.py.i
+data/MANIFEST.in.i
+data/MANIFEST.i
+data/django_auth_ldap/backend.py.i
+data/django_auth_ldap/models.py.i
+data/tests/settings.py.i
+data/django_auth_ldap/config.py.i
