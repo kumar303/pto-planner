@@ -388,8 +388,7 @@ EMAIL_BLACKLIST = (
 
 # People who get notifications every time
 HR_MANAGERS = (
-  'dportillo@mozilla.com',
-  'karen@mozilla.com',
+  'jvandeven@mozilla.com',
 )
 
 try:
