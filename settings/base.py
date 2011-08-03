@@ -273,6 +273,7 @@ INSTALLED_APPS = (
     # apps/
     'dates',
     'users',
+    'legacy',
 )
 
 # Tells the extract script what files to look for L10n in and what function
