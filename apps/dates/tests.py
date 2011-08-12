@@ -674,3 +674,78 @@ class ViewsTest(TestCase):
         ok_('valid@ test.com' not in response.content)
         ok_('axe l@e..com' not in response.content)
         ok_(settings.HR_MANAGERS[0] in response.content)
+
+    def test_notify_notification_attachment(self):
+        url = reverse('dates.notify')
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+
+        assert self.client.login(username='peter', password='secret')
+        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
+        wednesday = monday + datetime.timedelta(days=2)
+
+        entry = Entry.objects.create(
+          start=monday,
+          end=wednesday,
+          user=peter,
+        )
+        tuesday = monday + datetime.timedelta(days=1)
+        data = {
+          monday.strftime('d-%Y%m%d'): 8,
+          tuesday.strftime('d-%Y%m%d'): 8,
+          wednesday.strftime('d-%Y%m%d'): 8,
+        }
+        url = reverse('dates.hours', args=[entry.pk])
+        response = self.client.post(url, data)
+        print response.content
+        eq_(response.status_code, 302)
+
+        assert len(mail.outbox)
+        email = mail.outbox[-1]
+
+        attachment = email.attachments[0]
+        filename, content, mimetype = attachment
+        eq_(filename, 'event.ics')
+        eq_(mimetype, 'text/calendar')
+        ok_('Peter Bengtsson on PTO (2 days)' in content)
+
+    def test_notify_notification_attachment_one_day(self):
+        url = reverse('dates.notify')
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+        )
+        peter.set_password('secret')
+        peter.save()
+
+        assert self.client.login(username='peter', password='secret')
+        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
+
+        entry = Entry.objects.create(
+          start=monday,
+          end=monday,
+          user=peter,
+        )
+        tuesday = monday + datetime.timedelta(days=1)
+        data = {
+          monday.strftime('d-%Y%m%d'): 4,
+        }
+        url = reverse('dates.hours', args=[entry.pk])
+        response = self.client.post(url, data)
+        print response.content
+        eq_(response.status_code, 302)
+
+        assert len(mail.outbox)
+        email = mail.outbox[-1]
+
+        attachment = email.attachments[0]
+        filename, content, mimetype = attachment
+        eq_(filename, 'event.ics')
+        eq_(mimetype, 'text/calendar')
+        ok_('peter on PTO (4 hours)' in content)

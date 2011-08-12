@@ -23,3 +23,4 @@ class Hours(models.Model):
     entry = models.ForeignKey(Entry)
     hours = models.IntegerField()
     date = models.DateField()
+    birthday = models.BooleanField(default=False)
