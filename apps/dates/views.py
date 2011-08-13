@@ -357,6 +357,8 @@ def emails_sent(request, pk):
             data['emailed_users'].append(record)
         else:
             data['emailed_users'].append(email)
+    show_fireworks = not request.COOKIES.get('no_fw', False)
+    data['show_fireworks'] = show_fireworks
     return jingo.render(request, 'dates/emails_sent.html', data)
 
 

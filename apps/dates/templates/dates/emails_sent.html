@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 
+{% block extra_site_css %}
+{{ css('dates.emails_sent') }}
+{% endblock %}
+
+{% block extra_site_js %}
+{{ js('dates.emails_sent') }}
+<script>
+{#soundManager.url = '{{ js('soundmanager.swf') }}';#}
+soundManager.url = '/media/js/libs/swf/';
+</script>
+{% endblock %}
+
+
 {% block content %}
 <h2>Absolutely brilliant!</h2>
 
@@ -10,4 +23,14 @@
 {% endfor %}
 
 </p>
+
+
+{% if show_fireworks %}
+<div id="fireworks-template">
+ <div id="fw" class="firework"></div>
+ <div id="fp" class="fireworkParticle"><img src="/media/img/particles.gif" alt="" /></div>
+</div>
+<div id="fireContainer"></div>
+{% endif %}
+
 {% endblock %}

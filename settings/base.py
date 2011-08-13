@@ -194,6 +194,9 @@ MINIFY_BUNDLES = {
             'css/libs/fullcalendar.css',
             'css/dates/home.css',
         ),
+        'dates.emails_sent': (
+            'css/libs/fireworks.css',
+        ),
         'dates.list': (
             'css/libs/datatable/css/demo_table.css',
         )
@@ -211,6 +214,15 @@ MINIFY_BUNDLES = {
         ),
         'dates.hours': (
             'js/dates/hours.js',
+        ),
+        'soundmanager.swf': (
+            'js/libs/swf/soundmanager2.swf',
+        ),
+        'dates.emails_sent': (
+            'js/libs/soundmanager2-nodebug-jsmin.js',
+            'js/libs/fireworks.js',
+            'js/libs/jquery.cookie.min.js',
+            'js/dates/emails_sent.js',
         ),
         'jquery_ui': (
             'js/libs/jquery-ui-1.8.14.datepicker.autocomplete.min.js',
