@@ -64,8 +64,13 @@ def calendar_events(request):
         else:
             title = ''
         days = (entry.end - entry.start).days + 1
-        if days >= 5:
+        if days > 1:
             title += '%s days' % days
+            if Hours.objects.filter(entry=entry, birthday=True).exists():
+                title += ' (includes birthday)'
+        elif (days == 1 and entry.total_hours == 0 and
+            Hours.objects.filter(entry=entry, birthday=True)):
+            title += 'Birthday!'
         else:
             title += '%s hours' % entry.total_hours
         if entry.details:
@@ -185,16 +190,22 @@ def hours(request, pk):
             total_hours = 0
             for date in utils.get_weekday_dates(entry.start, entry.end):
                 hours = int(form.cleaned_data[date.strftime('d-%Y%m%d')])
+                birthday = False
+                if hours == -1:
+                    birthday = True
+                    hours = 0
                 assert hours >= 0 and hours <= settings.WORK_DAY, hours
                 try:
                     hours_ = Hours.objects.get(entry=entry, date=date)
                     hours_.hours = hours  # nasty stuff!
+                    hours_.birthday = birthday
                     hours_.save()
                 except Hours.DoesNotExist:
                     Hours.objects.create(
                       entry=entry,
                       hours=hours,
-                      date=date
+                      date=date,
+                      birthday=birthday,
                     )
                 total_hours += hours
 
@@ -378,6 +389,13 @@ def list_json(request):
                    .select_related('user'))
         if fdata.get('date_from'):
             entries = entries.filter(start__gte=fdata.get('date_from'))
+        if fdata.get('date_filed_from'):
+            entries = entries.filter(
+              add_date__gte=fdata.get('date_filed_from'))
+        if fdata.get('date_filed_to'):
+            entries = entries.filter(
+              add_date__lt=fdata.get('date_filed_to') +
+                datetime.timedelta(days=1))
     else:
         entries = Entry.objects.none()
 

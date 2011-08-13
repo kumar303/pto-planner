@@ -615,6 +615,17 @@ class ViewsTest(TestCase):
         ok_(struct[0]['title'].startswith('umpa - 6 days, This time'))
         ok_(struct[0]['title'].endswith('...'))
 
+        Hours.objects.create(
+          entry=entry,
+          date=entry.start,
+          hours=8,
+          birthday=True
+        )
+        response = self.client.get(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        eq_(len(struct), 1)
+        ok_('birthday' in struct[0]['title'])
 
     def test_notify_free_input(self):
         url = reverse('dates.notify')
@@ -714,6 +725,46 @@ class ViewsTest(TestCase):
         eq_(filename, 'event.ics')
         eq_(mimetype, 'text/calendar')
         ok_('Peter Bengtsson on PTO (2 days)' in content)
+
+    def test_notify_notification_attachment_on_birthday(self):
+        url = reverse('dates.notify')
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+
+        assert self.client.login(username='peter', password='secret')
+        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
+        wednesday = monday + datetime.timedelta(days=2)
+
+        entry = Entry.objects.create(
+          start=monday,
+          end=monday,
+          user=peter,
+        )
+        data = {
+          monday.strftime('d-%Y%m%d'): '-1',
+        }
+        url = reverse('dates.hours', args=[entry.pk])
+        response = self.client.post(url, data)
+        eq_(response.status_code, 302)
+
+        hours, = Hours.objects.all()
+        assert hours.birthday
+
+        assert len(mail.outbox)
+        email = mail.outbox[-1]
+
+        attachment = email.attachments[0]
+        filename, content, mimetype = attachment
+        eq_(filename, 'event.ics')
+        eq_(mimetype, 'text/calendar')
+        ok_('Peter Bengtsson' in content)
+        ok_('birthday' in content)
 
     def test_notify_notification_attachment_one_day(self):
         url = reverse('dates.notify')

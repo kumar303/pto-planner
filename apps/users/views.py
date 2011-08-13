@@ -96,6 +96,9 @@ def ldap_search(request):
 
     results = []
     for each in ldap_lookup.search_users(query, autocomplete=True, limit=10):
+        if not each.get('givenName'):
+            logging.warn("Skipping LDAP entry %s" % each)
+            continue
         full_name_and_email = '%s %s <%s>' % (each['givenName'],
                                               each['sn'],
                                               each['mail'])

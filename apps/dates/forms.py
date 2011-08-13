@@ -114,7 +114,9 @@ class HoursForm(BaseForm):
               ((settings.WORK_DAY, 'Full day (%s hours)' % settings.WORK_DAY),
                (settings.WORK_DAY / 2,
                 'Half day (%s hours)' % (settings.WORK_DAY / 2)),
-               (0, '0 hrs')),
+               (0, '0 hrs'),
+               (-1, 'Birthday'),  # exception
+               ),
                required=True,
                label=date.strftime(settings.DEFAULT_DATE_FORMAT),
                widget=forms.widgets.RadioSelect(attrs={'class':'hours'})
