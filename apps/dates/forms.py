@@ -111,9 +111,9 @@ class HoursForm(BaseForm):
         for date in utils.get_weekday_dates(self.entry.start, self.entry.end):
             field_name = date.strftime('d-%Y%m%d')
             self.fields[field_name] = forms.fields.ChoiceField(
-              ((settings.WORK_DAY, 'Full day (%s hours)' % settings.WORK_DAY),
+              ((settings.WORK_DAY, 'Full day (%sh)' % settings.WORK_DAY),
                (settings.WORK_DAY / 2,
-                'Half day (%s hours)' % (settings.WORK_DAY / 2)),
+                'Half day (%sh)' % (settings.WORK_DAY / 2)),
                (0, '0 hrs'),
                (-1, 'Birthday'),  # exception
                ),

@@ -800,3 +800,72 @@ class ViewsTest(TestCase):
         eq_(filename, 'event.ics')
         eq_(mimetype, 'text/calendar')
         ok_('peter on PTO (4 hours)' in content)
+
+    def test_get_minions(self):
+        from dates.views import get_minions
+        gary = User.objects.create_user(
+          'gary', 'gary@mozilla.com'
+        )
+
+        todd = User.objects.create_user(
+          'todd', 'todd@mozilla.com',
+        )
+        profile = todd.get_profile()
+        profile.manager = gary.email
+        profile.save()
+
+        mike = User.objects.create_user(
+          'mike', 'mike@mozilla.com',
+        )
+        profile = mike.get_profile()
+        profile.manager = todd.email
+        profile.save()
+
+        laura = User.objects.create_user(
+          'laura', 'laura@mozilla.com',
+        )
+        profile = laura.get_profile()
+        profile.manager = mike.email
+        profile.save()
+
+        peter = User.objects.create_user(
+          'peter', 'peter@mozilla.com',
+        )
+        profile = peter.get_profile()
+        profile.manager = laura.email
+        profile.save()
+
+        users = get_minions(gary, max_depth=1)
+        eq_(users, [todd])
+
+        users = get_minions(gary, max_depth=2)
+        eq_(users, [todd, mike])
+
+        users = get_minions(gary, max_depth=3)
+        eq_(users, [todd, mike, laura])
+
+        users = get_minions(gary, max_depth=4)
+        eq_(users, [todd, mike, laura, peter])
+
+        users = get_minions(gary, max_depth=10)
+        eq_(users, [todd, mike, laura, peter])
+
+        # from todd's perspective
+        users = get_minions(todd, max_depth=1)
+        eq_(users, [mike])
+
+        users = get_minions(todd, max_depth=2)
+        eq_(users, [mike, laura])
+
+        users = get_minions(todd, max_depth=3)
+        eq_(users, [mike, laura, peter])
+
+        users = get_minions(todd, max_depth=10)
+        eq_(users, [mike, laura, peter])
+
+        # from laura's perspective
+        users = get_minions(laura, max_depth=1)
+        eq_(users, [peter])
+
+        users = get_minions(laura, max_depth=99)
+        eq_(users, [peter])

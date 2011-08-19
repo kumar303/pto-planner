@@ -91,9 +91,7 @@ def calendar_events(request):
     user_ids = [request.user.pk]
     colors = {}
     colors[request.user.pk] = None
-    for minion in (UserProfile.objects.filter(manager_user=request.user)
-                   .select_related('manager_user')
-                   .order_by('manager_user')):
+    for minion in get_minions(request.user, max_depth=2):
         user_ids.append(minion.pk)
         colors[minion.pk] = _colors.pop()
     for entry in (Entry.objects
@@ -111,6 +109,18 @@ def calendar_events(request):
 
     return entries
 
+def get_minions(user, depth=1, max_depth=2):
+    minions = []
+    for minion in (UserProfile.objects.filter(manager_user=user)
+                   .select_related('manager_user')
+                   .order_by('manager_user')):
+        minions.append(minion.user)
+
+        if depth < max_depth:
+            minions.extend(get_minions(minion.user,
+                                       depth=depth + 1,
+                                       max_depth=max_depth))
+    return minions
 
 @transaction.commit_on_success
 @login_required
