@@ -11,7 +11,14 @@
 	font-weight: bold;
 }
 .date_discriminator td {
-	padding: 5px;
+	padding: 3px;
+}
+.date_discriminator th {
+	vertical-align: top;
+}
+.date_discriminator .help_text {
+        font-size: 90%;
+        color:#999;
 }
 .date_discriminator .date {
 	font-size: 13px;

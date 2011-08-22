@@ -18,10 +18,31 @@
   <h5 id="date_discriminator_hours">{{ total_hours }}</h5>
 </div>
 <div id="date_discriminator">
-  <table class="date_discriminator">
-  {{ form|safe }}
+
+  {% if form.non_field_errors() %}
+  <div class="general-errors">
+  {{ form.non_field_errors()|safe }}
+  </div>
+  {% endif %}
+
+  <table class="date_discriminator" border="0">
+  {% for field in form.fields %}
   <tr>
-    <td colspan="2" style="text-align:right">
+    <th>{{ form[field].label }}:</th>
+    <td>
+      {{ form[field]|safe }}
+    </td>
+
+    <td class="help_text">
+      {% if form[field].help_text %}
+      Note: {{ form[field].help_text }}
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td>&nbsp;</td>
+    <td>
     <input type="submit" value="Submit">
     </td>
   </tr>

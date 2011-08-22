@@ -16,10 +16,20 @@ import vobject
 from models import Entry, Hours
 from users.models import UserProfile
 from users.utils import ldap_lookup
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from .utils import parse_datetime, DatetimeParseError
 import utils
 import forms
 from .decorators import json_view
+
+
+def valid_email(value):
+    try:
+        validate_email(value)
+        return True
+    except ValidationError:
+        return False
 
 @login_required
 def home(request):  # aka dashboard
@@ -84,6 +94,7 @@ def calendar_events(request):
             else:
                 title += entry.details
         return title
+
     COLORS = ("#EAA228", "#c5b47f", "#579575", "#839557", "#958c12",
               "#953579", "#4b5de4", "#d8b83f", "#ff5800", "#0085cc",
               "#c747a3", "#cddf54", "#FBD178", "#26B4E3", "#bd70c7")
@@ -206,18 +217,35 @@ def hours(request, pk):
                     hours = 0
                 assert hours >= 0 and hours <= settings.WORK_DAY, hours
                 try:
-                    hours_ = Hours.objects.get(entry=entry, date=date)
-                    hours_.hours = hours  # nasty stuff!
-                    hours_.birthday = birthday
-                    hours_.save()
+                    hours_ = Hours.objects.get(entry__user=entry.user, date=date)
+                    if hours_.hours:
+                        # this nullifies the previous entry on this date
+                        reverse_entry = Entry.objects.create(
+                          user=hours_.entry.user,
+                          start=date,
+                          end=date,
+                          details=hours_.entry.details,
+                          total_hours=hours_.hours * -1,
+                        )
+                        Hours.objects.create(
+                          entry=reverse_entry,
+                          hours=hours_.hours * -1,
+                          date=date,
+                        )
+                    #hours_.hours = hours  # nasty stuff!
+                    #hours_.birthday = birthday
+                    #hours_.save()
                 except Hours.DoesNotExist:
-                    Hours.objects.create(
-                      entry=entry,
-                      hours=hours,
-                      date=date,
-                      birthday=birthday,
-                    )
+                    # nothing to credit
+                    pass
+                Hours.objects.create(
+                  entry=entry,
+                  hours=hours,
+                  date=date,
+                  birthday=birthday,
+                )
                 total_hours += hours
+            #raise NotImplementedError
 
             is_edit = entry.total_hours is not None
             #if entry.total_hours is not None:
@@ -246,10 +274,13 @@ def hours(request, pk):
         initial = {}
         for date in utils.get_weekday_dates(entry.start, entry.end):
             try:
-                hours_ = Hours.objects.get(entry=entry, date=date)
+                #hours_ = Hours.objects.get(entry=entry, date=date)
+                hours_ = Hours.objects.get(date=date, entry__user=entry.user)
                 initial[date.strftime('d-%Y%m%d')] = hours_.hours
             except Hours.DoesNotExist:
                 initial[date.strftime('d-%Y%m%d')] = settings.WORK_DAY
+
+        #print initial
         form = forms.HoursForm(entry, initial=initial)
     data['form'] = form
 
@@ -278,7 +309,8 @@ def send_email_notification(entry, extra_users, is_edit=False):
     profile = entry.user.get_profile()
     if profile and profile.manager:
         manager = ldap_lookup.fetch_user_details(profile.manager)
-        email_addresses.append(manager['mail'])
+        if manager.get('mail'):
+            email_addresses.append(manager['mail'])
 
     if extra_users:
         email_addresses.extend(extra_users)
@@ -408,6 +440,15 @@ def list_json(request):
             entries = entries.filter(
               add_date__lt=fdata.get('date_filed_to') +
                 datetime.timedelta(days=1))
+        if fdata.get('name'):
+            name = fdata['name'].strip()
+            if valid_email(name):
+                entries = entries.filter(user__email__iexact=name)
+            else:
+                entries = entries.filter(
+                  Q(user__first_name__istartswith=name.split()[0]) |
+                  Q(user__last_name__istartswith=name.split()[-1])
+                )
     else:
         entries = Entry.objects.none()
 

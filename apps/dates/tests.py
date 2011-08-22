@@ -1,6 +1,7 @@
 import re
 import time
 from urlparse import urlparse
+from collections import defaultdict
 import datetime
 from django.test import TestCase
 from django.conf import settings
@@ -208,6 +209,8 @@ class ViewsTest(TestCase):
         ok_('--\n%s' % settings.EMAIL_SIGNATURE in email.body)
 
     def test_overlap_dates_errors(self):
+        return  # Obsolete now
+
         monday = datetime.date(2011, 7, 25)
         tuesday = monday + datetime.timedelta(days=1)
         wednesday = monday + datetime.timedelta(days=2)
@@ -323,10 +326,13 @@ class ViewsTest(TestCase):
         # added one and deleted one
         assert Entry.objects.all().count() == 3
 
-    def _get_inputs(self, html, **filters):
+    def _get_inputs(self, html, multiple=False, **filters):
         _input_regex = re.compile('<input (.*?)>', re.M | re.DOTALL)
         _attrs_regex = re.compile('(\w+)="([^"]+)"')
-        all_attrs = {}
+        if multiple:
+            all_attrs = defaultdict(list)
+        else:
+            all_attrs = {}
         for input in _input_regex.findall(html):
             attrs = dict(_attrs_regex.findall(input))
             name = attrs.get('name', attrs.get('id', ''))
@@ -335,7 +341,10 @@ class ViewsTest(TestCase):
                     name = None
                     break
             if name:
-                all_attrs[name] = attrs
+                if multiple:
+                    all_attrs[name].append(attrs)
+                else:
+                    all_attrs[name] = attrs
         return all_attrs
 
     def test_forbidden_access(self):
@@ -399,7 +408,6 @@ class ViewsTest(TestCase):
         hours_url = reverse('dates.hours', args=[entry.pk])
         response = self.client.get(hours_url)
         eq_(response.status_code, 200)
-        #print response.content
 
         tuesday = monday + datetime.timedelta(days=1)
         wednesday = monday + datetime.timedelta(days=2)
@@ -657,7 +665,6 @@ class ViewsTest(TestCase):
                                           'details': "Having fun",
                                           'notify': notify.replace('\n','\t')
                                           })
-        #print response.content
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
 
@@ -714,7 +721,6 @@ class ViewsTest(TestCase):
         }
         url = reverse('dates.hours', args=[entry.pk])
         response = self.client.post(url, data)
-        print response.content
         eq_(response.status_code, 302)
 
         assert len(mail.outbox)
@@ -789,7 +795,6 @@ class ViewsTest(TestCase):
         }
         url = reverse('dates.hours', args=[entry.pk])
         response = self.client.post(url, data)
-        print response.content
         eq_(response.status_code, 302)
 
         assert len(mail.outbox)
@@ -869,3 +874,79 @@ class ViewsTest(TestCase):
 
         users = get_minions(laura, max_depth=99)
         eq_(users, [peter])
+
+    def test_enter_reversal_pto(self):
+        monday = datetime.date(2011, 7, 25)
+        tuesday = monday + datetime.timedelta(days=1)
+
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+
+        entry = Entry.objects.create(
+          user=peter,
+          start=monday,
+          end=monday,
+          total_hours=8,
+        )
+        Hours.objects.create(
+          entry=entry,
+          date=monday,
+          hours=8,
+        )
+
+        # Suppose you now change your mind and want it to be 4 hours on Monday
+        # instead
+        url = reverse('dates.notify')
+        peter.set_password('secret')
+        peter.save()
+        assert self.client.login(username='peter', password='secret')
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+
+        response = self.client.post(url, {
+          'start': monday,
+          'end': monday,
+          'details': 'Going on a cruise',
+        })
+        eq_(response.status_code, 302)
+
+        assert Entry.objects.all().count() == 2
+        assert Hours.objects.all().count() == 1
+        second_entry = Entry.objects.get(details='Going on a cruise')
+        assert second_entry.total_hours is None
+
+        url = reverse('dates.hours', args=[second_entry.pk])
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+
+        radio_inputs = self._get_inputs(response.content, type="radio", checked="checked")
+        attrs = radio_inputs.values()[0]
+        date_key = radio_inputs.keys()[0]
+        eq_(attrs['value'], '8')
+
+        assert date_key == monday.strftime('d-%Y%m%d')
+        data = {
+          date_key: 4,
+        }
+
+        response = self.client.post(url, data)
+        eq_(response.status_code, 302)
+
+        eq_(Entry.objects.all().count(), 3)
+        eq_(Entry.objects.filter(user=peter).count(), 3)
+        eq_(Hours.objects.all().count(), 3)
+
+        second_entry = Entry.objects.get(pk=second_entry.pk)
+        eq_(second_entry.total_hours, 4)
+
+        total = sum(x.total_hours for x in Entry.objects.all())
+        eq_(total, 4)
+
+        ok_(Entry.objects.filter(total_hours=8))
+        ok_(Entry.objects.filter(total_hours=-8))
+        ok_(Entry.objects.filter(total_hours=4))
+#        url = reverse(

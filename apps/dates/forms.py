@@ -87,19 +87,19 @@ class AddForm(BaseForm):
         if 'start' in cleaned_data and 'end' in cleaned_data:
             if cleaned_data['start'] > cleaned_data['end']:
                 raise forms.ValidationError("Start can't be after end")
-        if 'start' in cleaned_data and 'end' in cleaned_data:
-            # 'start' can not be inside a range of a previous entry
-            exclusion = (Q(end__lt=cleaned_data['start']) |
-                         Q(start__gt=cleaned_data['end']))
-
-            for entry in (Entry.objects.filter(user=self.user,
-                                               total_hours__isnull=False)
-                          .exclude(exclusion)):
-                tmpl = "Date range overlaps previous PTO of %s to %s"
-                raise forms.ValidationError(
-                   tmpl % (entry.start.strftime(settings.DEFAULT_DATE_FORMAT),
-                           entry.end.strftime(settings.DEFAULT_DATE_FORMAT))
-                )
+#        if 'start' in cleaned_data and 'end' in cleaned_data:
+#            # 'start' can not be inside a range of a previous entry
+#            exclusion = (Q(end__lt=cleaned_data['start']) |
+#                         Q(start__gt=cleaned_data['end']))
+#
+#            for entry in (Entry.objects.filter(user=self.user,
+#                                               total_hours__isnull=False)
+#                          .exclude(exclusion)):
+#                tmpl = "Date range overlaps previous PTO of %s to %s"
+#                raise forms.ValidationError(
+#                   tmpl % (entry.start.strftime(settings.DEFAULT_DATE_FORMAT),
+#                           entry.end.strftime(settings.DEFAULT_DATE_FORMAT))
+#                )
 
         return cleaned_data
 
@@ -110,6 +110,12 @@ class HoursForm(BaseForm):
         self.entry = entry
         for date in utils.get_weekday_dates(self.entry.start, self.entry.end):
             field_name = date.strftime('d-%Y%m%d')
+
+            try:
+                hours_ = Hours.objects.get(date=date, entry__user=entry.user)
+                help_text = 'Already logged %d hours on this day' % hours_.hours
+            except Hours.DoesNotExist:
+                help_text = ''
             self.fields[field_name] = forms.fields.ChoiceField(
               ((settings.WORK_DAY, 'Full day (%sh)' % settings.WORK_DAY),
                (settings.WORK_DAY / 2,
@@ -119,8 +125,10 @@ class HoursForm(BaseForm):
                ),
                required=True,
                label=date.strftime(settings.DEFAULT_DATE_FORMAT),
-               widget=forms.widgets.RadioSelect(attrs={'class':'hours'})
+               widget=forms.widgets.RadioSelect(attrs={'class':'hours'}),
+               help_text=help_text,
             )
+
 
     def clean(self):
         cleaned_data = super(HoursForm, self).clean()
