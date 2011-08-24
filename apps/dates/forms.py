@@ -21,6 +21,8 @@ class _BaseForm(object):
                 else:
                     klass = 'date'
                 self.fields[field].widget.attrs['class'] = klass
+                if 'size' not in self.fields[field].widget.attrs:
+                    self.fields[field].widget.attrs['size'] = 30
                 # Allow for all the default input formats AND our default one
                 self.fields[field].input_formats = (
                   (date_format,) + formats.get_format('DATE_INPUT_FORMATS'))

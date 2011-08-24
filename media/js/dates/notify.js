@@ -151,8 +151,17 @@ var StartEndDatepickers = (function() {
        _init();
      }
   }
-
 })();
+
+function moveManagersNotified() {
+  var tr_extra = $('#id_notify').parents('tr');
+  var new_tr = $('<tr>');
+  $('#managers-notified td').each(function(i, td) {
+    $(td).detach().appendTo(new_tr);
+  });
+  new_tr.insertBefore(tr_extra);
+  $('label', tr_extra).text("Additional to notify");
+}
 
 var dateFormat = 'DD, MM d, yy';
 $(function() {
@@ -165,4 +174,5 @@ $(function() {
   }
 
   AutocompleteNotify.init('id_notify', '/users/ldap-search/');
+  moveManagersNotified();
 });

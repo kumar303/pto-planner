@@ -13,12 +13,17 @@
   <td><a href="/">&larr; cancel</a></td>
   <td><input type="submit" value="Next &rarr;"></td>
 </tr>
+<tr id="managers-notified">
+  <td>&nbsp;</td>
+  <td>
+  The following managers will be notified:<br>
+  {% for manager_details in all_managers %}
+    <code>{{ full_name_form(manager_details) }}</code>{% if not loop.last %}, {% endif %}
+  {% endfor %}
+  </td>
+</tr>
 </table>
-<p>The following managers will be notified:<br>
-{% for manager_details in all_managers %}
-  <code>{{ full_name_form(manager_details) }}</code>{% if not loop.last %}, {% endif %}
-{% endfor %}
-</p>
+
 </form>
 {% endblock %}
 
