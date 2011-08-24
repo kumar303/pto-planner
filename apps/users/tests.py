@@ -251,7 +251,7 @@ class UsersTest(TestCase):
 
         response = self.client.post(url, {'username': 'mortal',
                                           'password': 'secret',
-                                          'rememberme': 'yes'})
+                                          'rememberme': ''})
         eq_(response.status_code, 302)
         expires = self.client.cookies['sessionid']['expires']
         date = expires.split()[1]

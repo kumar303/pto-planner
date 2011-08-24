@@ -949,4 +949,290 @@ class ViewsTest(TestCase):
         ok_(Entry.objects.filter(total_hours=8))
         ok_(Entry.objects.filter(total_hours=-8))
         ok_(Entry.objects.filter(total_hours=4))
-#        url = reverse(
+
+        # whilst we're at it, check that negative hours are included in the
+        # list_json
+        url = reverse('dates.list_json')
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_(response['Content-Type'].startswith('application/json'))
+        struct = json.loads(response.content)
+        entries = struct['aaData']
+        eq_(len(entries), 3)
+        totals = [x[4] for x in entries]
+        eq_(sum(totals), 8 + 4 - 8)
+
+    def test_list_json(self):
+        url = reverse('dates.list_json')
+
+        # start with no filtering
+        peter = User.objects.create(
+          username='peter',
+          email='peter@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        laura = User.objects.create(
+          username='laura',
+          email='laura@mozilla.com',
+          first_name='Laura',
+          last_name='van Der Thomson',
+        )
+
+        one_day = datetime.timedelta(days=1)
+        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
+        tuesday = monday + one_day
+
+        e0 = Entry.objects.create(
+          user=peter,
+          start=monday,
+          end=monday,
+          total_hours=None,
+          details='E0 Details'
+        )
+        e1 = Entry.objects.create(
+          user=peter,
+          start=tuesday,
+          end=tuesday,
+          total_hours=8,
+          details='E1 Details'
+        )
+        e2 = Entry.objects.create(
+          user=laura,
+          start=monday,
+          end=tuesday,
+          total_hours=8 + 4,
+          details='E2 Details'
+        )
+
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+
+        peter.set_password('secret')
+        peter.save()
+        assert self.client.login(username='peter', password='secret')
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_(response['Content-Type'].startswith('application/json'))
+        ok_(e0.details not in response.content)
+        ok_(e1.details in response.content)
+        ok_(e2.details in response.content)
+        struct = json.loads(response.content)
+        entries = struct['aaData']
+
+        def parse_date(s):
+            d = datetime.datetime.strptime(s, '%Y-%m-%d')
+            return d.date()
+
+        for entry in entries:
+            email = entry[0]
+            first_name = entry[1]
+            last_name = entry[2]
+            add_date = parse_date(entry[3])
+            total_hours = entry[4]
+            start_date = parse_date(entry[5])
+            end_date = parse_date(entry[6])
+            city = entry[7]
+            country = entry[8]
+            details = entry[9]
+            #...
+            if email == peter.email:
+                user = peter
+            elif email == laura.email:
+                user = laura
+            else:
+                raise AssertionError("unknown email")
+            eq_(first_name, user.first_name)
+            eq_(last_name, user.last_name)
+            eq_(add_date, datetime.date.today())
+            ok_(total_hours in (8, 12))
+            ok_(start_date in (monday, tuesday))
+            eq_(end_date, tuesday)
+            ok_(details in (e1.details, e2.details))
+
+        # test profile stuff
+        p = peter.get_profile()
+        p.city = 'London'
+        p.country = 'UK'
+        p.save()
+
+        p = laura.get_profile()
+        p.city = 'Washington DC'
+        p.country = 'USA'
+        p.save()
+
+        response = self.client.get(url)
+        struct = json.loads(response.content)
+        entries = struct['aaData']
+        for entry in entries:
+            city = entry[7]
+            ok_(city in ('London', 'Washington DC'))
+
+            country = entry[8]
+            ok_(country in ('UK', 'USA'))
+
+        filter = {'name': 'PeteR'}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'name': 'bengtssON'}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'name': peter.email.capitalize()}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'name': 'FOO@bar.com'}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'name': 'thomson'}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'name': 'VAN DER Thomson'}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'name': 'Laura VAN DER Thomson'}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'name': 'Peter bengtsson'}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' not in response.content)
+
+        e2.add_date -= datetime.timedelta(days=7)
+        e2.save()
+
+        filter = {'date_filed_to': datetime.date.today()}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'date_filed_to': (datetime.date.today() -
+                                    one_day)}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'date_filed_to': (datetime.date.today() -
+                                    one_day),
+                  'date_filed_from': (datetime.date.today() -
+                                    datetime.timedelta(days=3)),
+                  }
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'date_filed_from': datetime.date.today()}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'date_filed_from': 'invalid junk'}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' not in response.content)
+
+        # remember, ...
+        # Peter's event was tuesday only
+        # Laura's event was monday till tuesday
+        filter = {'date_from': tuesday}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'date_from': monday}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'date_from': tuesday + one_day}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'date_to': monday}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'date_to': monday - one_day}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'date_to': tuesday}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'date_to': tuesday + one_day}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' in response.content)
+
+    def test_list(self):
+        url = reverse('dates.list')
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+
+        peter = User.objects.create(
+          username='peter',
+          email='peter@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+        assert self.client.login(username='peter', password='secret')
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+
+        # now create some entries
+        laura = User.objects.create(
+          username='laura',
+          email='laura@mozilla.com',
+          first_name='Laura',
+          last_name='van Der Thomson',
+        )
+
+        one_day = datetime.timedelta(days=1)
+        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
+        tuesday = monday + one_day
+
+        e0 = Entry.objects.create(
+          user=peter,
+          start=monday,
+          end=monday,
+          total_hours=None,
+          details='E0 Details'
+        )
+        e1 = Entry.objects.create(
+          user=peter,
+          start=tuesday,
+          end=tuesday,
+          total_hours=8,
+          details='E1 Details'
+        )
+        e2 = Entry.objects.create(
+          user=laura,
+          start=monday,
+          end=tuesday,
+          total_hours=8 + 4,
+          details='E2 Details'
+        )
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)

@@ -412,12 +412,21 @@ def list_(request):
     if form.is_valid():
         data['filters'] = form.cleaned_data
 
-    data['first_date'] = Entry.objects.all().order_by('start')[0].start
-    data['last_date'] = Entry.objects.all().order_by('-end')[0].end
-    data['first_filed_date'] = Entry.objects.all().order_by('add_date')[0].add_date
-    #data['theoretical_max'] = data['first_date'] + datetime.timedelta(days=100)
-    data['form'] = form
     data['today'] = datetime.date.today()
+    entries_base = Entry.objects.all()
+
+    try:
+        data['first_date'] = entries_base.order_by('start')[0].start
+        data['last_date'] = entries_base.order_by('-end')[0].end
+        data['first_filed_date'] = entries_base.order_by('add_date')[0].add_date
+        #data['theoretical_max'] = data['first_date'] + datetime.timedelta(days=100)
+    except IndexError:
+        # first run, not so important
+        data['first_date'] = datetime.date(2000, 1, 1)
+        data['last_date'] = datetime.date(2000, 1, 1)
+        data['first_filed_date'] = datetime.date(2000, 1, 1)
+
+    data['form'] = form
     return jingo.render(request, 'dates/list.html', data)
 
 
@@ -432,7 +441,9 @@ def list_json(request):
         entries = (Entry.objects.exclude(total_hours=None)
                    .select_related('user'))
         if fdata.get('date_from'):
-            entries = entries.filter(start__gte=fdata.get('date_from'))
+            entries = entries.filter(end__gte=fdata.get('date_from'))
+        if fdata.get('date_to'):
+            entries = entries.filter(start__lte=fdata.get('date_to'))
         if fdata.get('date_filed_from'):
             entries = entries.filter(
               add_date__gte=fdata.get('date_filed_from'))
@@ -447,7 +458,7 @@ def list_json(request):
             else:
                 entries = entries.filter(
                   Q(user__first_name__istartswith=name.split()[0]) |
-                  Q(user__last_name__istartswith=name.split()[-1])
+                  Q(user__last_name__iendswith=name.split()[-1])
                 )
     else:
         entries = Entry.objects.none()

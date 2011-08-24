@@ -55,4 +55,4 @@ class AuthenticationForm(django.contrib.auth.forms.AuthenticationForm):
     # allows for using email to log in
     username = forms.CharField(label="Username", max_length=75,
                                widget=EmailInput())
-    rememberme = forms.BooleanField(label="Remember me", required=False)
+    #rememberme = forms.BooleanField(label="Remember me", required=False)
