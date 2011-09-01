@@ -25,7 +25,7 @@ def fetch_user_details(email, force_refresh=False):
             return result
     #print "LDAP cache miss"
 
-    results = search_users(email, limit=1)
+    results = search_users(email, 1)
     if results:
         result = results[0]
         #print result
@@ -39,20 +39,22 @@ def fetch_user_details(email, force_refresh=False):
     return result
 
 
-def search_users(query, autocomplete=False, limit=20):
+def search_users(query, limit, autocomplete=False):
     connection = ldap.initialize(settings.AUTH_LDAP_SERVER_URI)
     connection.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
     if limit > 0:
         connection.set_option(ldap.OPT_SIZELIMIT, limit)
     connection.simple_bind_s(settings.AUTH_LDAP_BIND_DN,
-                       settings.AUTH_LDAP_BIND_PASSWORD)
-
+                             settings.AUTH_LDAP_BIND_PASSWORD)
     if autocomplete:
         filter_elems = []
         if query.startswith(':'):
             searches = {'uid': query[1:]}
         else:
             searches = {'givenName': query, 'sn': query, 'mail': query}
+            if ' ' in query:
+                # e.g. 'Peter b' or 'laura toms'
+                searches['cn'] = query
         for key, value in searches.items():
             if not value:
                 continue

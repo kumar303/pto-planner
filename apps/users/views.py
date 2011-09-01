@@ -95,7 +95,9 @@ def ldap_search(request):
         return []
 
     results = []
-    for each in ldap_lookup.search_users(query, autocomplete=True, limit=10):
+    # I chose a limit of 30 because there are about 20+ 'peter'
+    # something in mozilla
+    for each in ldap_lookup.search_users(query, 30, autocomplete=True):
         if not each.get('givenName'):
             logging.warn("Skipping LDAP entry %s" % each)
             continue

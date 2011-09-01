@@ -19,6 +19,7 @@ from users.utils.ldap_mock import MockLDAP
 
 RaiseInvalidCredentials = object()
 
+
 class UsersTest(TestCase):
 
     def setUp(self):
@@ -102,7 +103,6 @@ class UsersTest(TestCase):
         eq_(response.status_code, 200)
         ok_('Mortal' not in response.content)
 
-
     def test_login_with_ldap_user(self):
         fake_user = [
           ('mail=mortal,o=com,dc=mozilla',
@@ -179,7 +179,6 @@ class UsersTest(TestCase):
         response = self.client.get(settings.LOGIN_URL)
         eq_(response.status_code, 200)
         ok_('Mortal' not in response.content)
-
 
     def _get_all_inputs(self, html):
         _input_regex = re.compile('<input (.*?)>', re.M | re.DOTALL)
