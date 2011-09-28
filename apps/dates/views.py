@@ -1,6 +1,7 @@
 import datetime
 from urllib import urlencode
 from decimal import Decimal
+from collections import defaultdict
 import jingo
 from django import http
 from django.contrib.auth.decorators import login_required
@@ -41,6 +42,18 @@ def home(request):  # aka dashboard
     else:
         first_day = 0  # default to 0=Sunday
     data['first_day'] = first_day
+
+    right_now_users = []
+    right_nows = defaultdict(list)
+    _today = datetime.date.today()
+    for entry in Entry.objects.filter(start__lte=_today, end__gte=_today, total_hours__gte=0).order_by('user__first_name', 'user__last_name', 'user__username'):
+        if entry.user not in right_now_users:
+            right_now_users.append(entry.user)
+        left = (entry.end - _today).days + 1
+        right_nows[entry.user].append((left, entry))
+
+    data['right_nows'] = right_nows
+    data['right_now_users'] = right_now_users
     return jingo.render(request, 'dates/home.html', data)
 
 @json_view
@@ -107,6 +120,7 @@ def calendar_events(request):
         colors[minion.pk] = _colors.pop()
     for entry in (Entry.objects
                    .filter(user__in=user_ids,
+                           total_hours__gte=0,
                            total_hours__isnull=False)
                    .select_related('user')
                    .exclude(Q(end__lt=start) | Q(start__gt=end))):
@@ -357,7 +371,7 @@ def send_email_notification(entry, extra_users, is_edit=False):
         else:
             length = '%s hours' % entry.total_hours
     else:
-        days = (entry.end - entry.start).days
+        days = (entry.end - entry.start).days + 1
         if days == 1:
             length = '1 day'
         else:

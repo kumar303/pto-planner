@@ -207,6 +207,12 @@ class ViewsTest(TestCase):
 
         eq_(email.cc, [peter.email])
         ok_('--\n%s' % settings.EMAIL_SIGNATURE in email.body)
+        eq_(len(email.attachments), 1)
+        filename, content, mimetype = email.attachments[0]
+        eq_(filename, 'event.ics')
+        eq_(mimetype, 'text/calendar')
+        ok_('Peter Bengtsson on PTO' in content)
+        ok_('3 days' in content)
 
     def test_overlap_dates_errors(self):
         return  # Obsolete now
@@ -730,7 +736,7 @@ class ViewsTest(TestCase):
         filename, content, mimetype = attachment
         eq_(filename, 'event.ics')
         eq_(mimetype, 'text/calendar')
-        ok_('Peter Bengtsson on PTO (2 days)' in content)
+        ok_('Peter Bengtsson on PTO (3 days)' in content)
 
     def test_notify_notification_attachment_on_birthday(self):
         url = reverse('dates.notify')
@@ -1236,3 +1242,78 @@ class ViewsTest(TestCase):
 
         response = self.client.get(url)
         eq_(response.status_code, 200)
+
+    def test_dashboard_on_pto_right_now(self):
+        """On the dashboard we can expect to see who is on PTO right now.
+        Expect that past and future entries don't appear.
+        It should also say how many days they have left.
+        """
+
+        jill = User.objects.create_user(
+          'jill', 'jill@mozilla.com', password='secret'
+        )
+        assert self.client.login(username='jill', password='secret')
+        response = self.client.get('/')
+        eq_(response.status_code, 200)
+
+        bobby = User.objects.create_user(
+          'bobby', 'bobby@mozilla.com',
+        )
+        freddy = User.objects.create_user(
+          'freddy', 'freddy@mozilla.com',
+        )
+        dicky = User.objects.create_user(
+          'dicky', 'dicky@mozilla.com',
+        )
+        harry = User.objects.create_user(
+          'harry', 'harry@mozilla.com',
+        )
+
+        ok_('bobby' not in response.content)
+        ok_('freddy' not in response.content)
+        ok_('dicky' not in response.content)
+        ok_('harry' not in response.content)
+
+        today = datetime.date.today()
+
+        Entry.objects.create(
+          user=bobby,
+          total_hours=16,
+          start=today - datetime.timedelta(days=2),
+          end=today - datetime.timedelta(days=1),
+        )
+        response = self.client.get('/')
+        ok_('bobby' not in response.content)
+
+        Entry.objects.create(
+          user=freddy,
+          total_hours=16,
+          start=today - datetime.timedelta(days=1),
+          end=today,
+        )
+        response = self.client.get('/')
+        ok_('freddy' in response.content)
+
+        Entry.objects.create(
+          user=dicky,
+          total_hours=4,
+          start=today,
+          end=today,
+        )
+        response = self.client.get('/')
+        ok_('dicky' in response.content)
+
+        entry = Entry.objects.create(
+          user=harry,
+          total_hours=16,
+          start=today + datetime.timedelta(days=1),
+          end=today + datetime.timedelta(days=2),
+        )
+        response = self.client.get('/')
+        ok_('harry' not in response.content)
+
+        entry.start -= datetime.timedelta(days=1)
+        entry.end -= datetime.timedelta(days=1)
+        entry.save()
+        response = self.client.get('/')
+        ok_('harry' in response.content)

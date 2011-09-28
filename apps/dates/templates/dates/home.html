@@ -9,6 +9,23 @@
 
 <div id="calendar"></div>
 
+<div id="rightnow">
+<h2>Who's on PTO right now?</h2>
+
+<dl>
+{% for user in right_now_users %}
+  <dt>{{ full_name_form(user) }}</dt>
+  {% for days_left, entry in right_nows[user] %}
+    <dd><a href="{{ entry_to_list_url(entry) }}"
+           title="{{ entry.details }}"
+           >{% if entry_is_birthday(entry) %}Birthday!{% else %}{{ days_left }} (of {{ entry_length(entry) }}) days left{% endif %}</a></dd>
+  {% endfor %}
+{% else %}
+<dd><em>no one at the moment</em></dd>
+{% endfor %}
+</dl>
+</div>
+
 {% endblock %}
 
 

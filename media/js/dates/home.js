@@ -11,4 +11,9 @@ $(function() {
       calendar.fullCalendar('unselect');
     }
   });
+
+  $('<a href="#rightnow"></a>')
+    .html($('#rightnow h2').text() + ' &darr;')
+      .addClass('rightnow-anchor')
+        .prependTo($('#content'));
 });

@@ -3,7 +3,9 @@ import urlparse
 
 from django.contrib.auth.models import User
 from django.utils.encoding import smart_str
+from django.core.urlresolvers import reverse
 
+from dates.models import Hours
 import jinja2
 from jingo import register
 
@@ -57,6 +59,30 @@ def static(context, url):
     """Get a STATIC_URL link with a cache buster querystring."""
     return media(context, url, 'STATIC_URL')
 
+@register.function
+@jinja2.contextfunction
+def entry_to_list_url(context, entry):
+    url = reverse('dates.list')
+    values = {'name': entry.user.email,
+              'date_from': entry.start.strftime('%d %B %Y'),
+              'date_to': entry.end.strftime('%d %B %Y'),
+              }
+    values_encoded = urllib.urlencode(values)
+    return '%s?%s' % (url, values_encoded)
+
+@register.function
+@jinja2.contextfunction
+def entry_length(context, entry):
+    return (entry.end - entry.start).days + 1
+
+@register.function
+@jinja2.contextfunction
+def entry_is_birthday(context, entry):
+    if entry.total_hours == 0:
+        if (entry.end - entry.start).days == 0:
+            if Hours.objects.filter(entry=entry, birthday=True).exists():
+                return True
+    return False
 
 @register.function
 @jinja2.contextfunction
