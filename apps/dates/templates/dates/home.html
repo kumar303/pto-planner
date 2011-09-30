@@ -18,7 +18,16 @@
   {% for days_left, entry in right_nows[user] %}
     <dd><a href="{{ entry_to_list_url(entry) }}"
            title="{{ entry.details }}"
-           >{% if entry_is_birthday(entry) %}Birthday!{% else %}{{ days_left }} (of {{ entry_length(entry) }}) days left{% endif %}</a></dd>
+	   >ends in
+           {% trans count=days_left %}
+           1 day
+           {% pluralize %}
+           {{ days_left }} days
+           {% endtrans %}
+           on
+           {{ format_date(entry.end) }}
+           </a>
+    </dd>
   {% endfor %}
 {% else %}
 <dd><em>no one at the moment</em></dd>

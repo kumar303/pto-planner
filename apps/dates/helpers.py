@@ -2,6 +2,7 @@ import urllib
 import urlparse
 
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils.encoding import smart_str
 from django.core.urlresolvers import reverse
 
@@ -119,3 +120,11 @@ def full_name_form(context, user):
         return name
     else:
         return email
+
+
+@register.function
+@jinja2.contextfunction
+def format_date(context, date, format=None):
+    if format is None:
+        format = settings.DEFAULT_DATE_FORMAT
+    return date.strftime(format)
