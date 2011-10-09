@@ -12,6 +12,9 @@ DEV = True
 
 #TIME_ZONE = 'Europe/London'
 
+# Cannot be blank!
+SECRET_KEY = ''
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',

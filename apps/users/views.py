@@ -35,6 +35,7 @@
 # ***** END LICENSE BLOCK *****
 
 import logging
+
 from django import http
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
@@ -44,13 +45,18 @@ from django.db import transaction
 from django.contrib import messages
 import django.contrib.auth.views
 from django.conf import settings
+
 import jingo
+from session_csrf import anonymous_csrf
+
 import forms
 from models import get_user_profile
 from django.shortcuts import render_to_response as django_render_to_response
 from dates.decorators import json_view
 from utils import ldap_lookup
 
+
+@anonymous_csrf
 def login(request):
     # mostly copied from zamboni
     logout(request)

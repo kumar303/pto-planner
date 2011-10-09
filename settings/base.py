@@ -6,6 +6,8 @@ import socket
 
 from django.utils.functional import lazy
 
+from funfactory import settings_base as funfactory_base
+
 # Make file paths relative to settings.
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 path = lambda *a: os.path.join(ROOT, *a)
@@ -48,7 +50,10 @@ USE_L10N = True
 
 # The host currently running the site.  Only use this in code for good reason;
 # the site is designed to run on a cluster and should continue to support that
-HOSTNAME = socket.gethostname()
+try:
+    HOSTNAME = socket.gethostname()
+except socket.error:
+    HOSTNAME = 'localhost'
 
 # The front end domain of the site. If you're not running on a cluster this
 # might be the same as HOSTNAME but don't depend on that.  Use this when you
@@ -133,7 +138,7 @@ MEDIA_URL = '/media/'
 ADMIN_MEDIA_PREFIX = '/admin-media/'
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '1iz#v0m55@h26^m6hxk3a7at*h$qj_2a$juu1#nv50548j(x1v'
+SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -142,14 +147,7 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.media',
-    'django.core.context_processors.request',
-    'django.core.context_processors.csrf',
-    'django.contrib.messages.context_processors.messages',
-
+TEMPLATE_CONTEXT_PROCESSORS = funfactory_base.TEMPLATE_CONTEXT_PROCESSORS + (
     'dates.context_processors.global_settings',
     'jingo_minify.helpers.build_ids',
 )
@@ -237,50 +235,18 @@ MINIFY_BUNDLES = {
     }
 }
 
-
-## Middlewares, apps, URL configs.
-
-MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'commonware.middleware.FrameOptionsHeader',
+MIDDLEWARE_CLASSES = funfactory_base.MIDDLEWARE_CLASSES + (
     'commonware.middleware.HidePasswordOnException',
 )
 
 ROOT_URLCONF = '%s.urls' % ROOT_PACKAGE
 
-INSTALLED_APPS = (
-    # Local apps
-    'commons',  # Content common to most playdoh-based apps.
-    'jingo_minify',
-    #'tower',  # for ./manage.py extract (L10n)
-
-    # We need this so the jsi18n view will pick up our locale directory.
-    ROOT_PACKAGE,
-
-    # Third-party apps
-    'commonware.response.cookies',
-    #'djcelery',
-    'django_nose',
-
-    # Django contrib apps
-    'django.contrib.auth',
-    'django_sha2',  # Load after auth to monkey-patch it.
-
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    # 'django.contrib.sites',
+INSTALLED_APPS = funfactory_base.INSTALLED_APPS + (
     'django.contrib.messages',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-
-    # L10n
-    'product_details',
 
     # apps/
     'dates',
@@ -441,3 +407,5 @@ except ImportError:
        'users.email_auth_backend.EmailOrUsernameModelBackend',
        'django.contrib.auth.backends.ModelBackend',
     )
+
+SYSLOG_TAG = 'pto'
